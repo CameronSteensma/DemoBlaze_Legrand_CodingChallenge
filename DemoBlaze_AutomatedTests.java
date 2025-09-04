@@ -5,157 +5,134 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.*;
+import java.time.Duration;
+import java.util.List;
 
 public class DemoBlaze_AutomatedTests
 {
+	private WebDriver driver;
+	private WebDriverWait wait;
 
-	
+	@BeforeClass
+	public void setup()
+	{
+		driver = new ChromeDriver();
+		driver.manage().window().maximize();
+		driver.get("https://www.demoblaze.com/index.html");
+		wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+	}
+
+	@AfterClass
+	public void teardown()
+	{
+		if (driver != null)
+		{
+			driver.quit();
+		}
+	}
+
+	@BeforeMethod
+	public void goHome(){
+		driver.get("https://www.demoblaze.com/index.html");
+	}
+
+	private void waitForElement(By locator) 
+	{
+    	new WebDriverWait(driver, Duration.ofSeconds(5))
+        	.until(ExpectedConditions.visibilityOfElementLocated(locator));
+	}
+
+	private void openSignupModal()
+	{
+		driver.findElement(By.id("signup2")).click();
+	}
+
+	private void openLoginModal()
+	{
+		driver.findElement(By.id("login2")).click();
+	}
+
+	private void fillSignupForm(String username, String password)
+	{
+		wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("sign-username"))).sendKeys(username);
+		driver.findElement(By.id("sign-password")).sendKeys(password);
+		driver.findElement(By.cssSelector("#signInModal .btn-primary")).click();
+	}
+
+	private void fillLoginForm(String username, String password)
+	{
+		wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("loginusername"))).sendKeys(username);
+		driver.findElement(By.id("loginpassword")).sendKeys(password);
+		driver.findElement(By.cssSelector("#loginModal .btn-primary")).click();
+	}
+
+	private boolean isSignupModalDisplayed() {
+        return "display: block;".equals(driver.findElement(By.id("signInModal")).getAttribute("style"));
+    }
+
+    private boolean isLogoutVisible() {
+         List<WebElement> logout = driver.findElements(By.id("logout2"));
+        return !logout.isEmpty();
+    }
+
+	/* Tests HERE */
+	@Test
 	public void t_01_validateSignupUsernameAlreadyExists()
 	{
-		WebDriver driver = new ChromeDriver();
-		driver.get("https://www.demoblaze.com/index.html");
-		driver.findElement(By.id("signup2")).click();
-		driver.findElement(By.id("sign-username")).sendKeys("cameronsteensma");
-
-		driver.findElement(By.id("sign-password")).sendKeys("abc*");
-		driver.findElement(By.className("btn btn-primary")).click();
-		Assert.assertEquals("display: block;", driver.findElement(By.id("signInModal")).getAttribute("style"));
+		openSignupModal();
+		fillSignupForm("cameronsteensma", "abc*");
+		Assert.assertTrue(isSignupModalDisplayed(), "Signup modal should remain open if username already exists");
 	}
 
+	@Test
 	public void t_02_validateSignupEmptyUsername()
 	{
-		WebDriver driver = new ChromeDriver();
-		driver.get("https://www.demoblaze.com/index.html");
-		driver.findElement(By.id("signup2")).click();
-		driver.findElement(By.id("sign-username")).sendKeys("");
-
-		driver.findElement(By.id("sign-password")).sendKeys("abc*");
-		driver.findElement(By.className("btn btn-primary")).click();
-		Assert.assertEquals("display: block;", driver.findElement(By.id("signInModal")).getAttribute("style"));
+		openSignupModal();
+		fillSignupForm("", "abc*");
+		Assert.assertTrue(isSignupModalDisplayed(), "Signup modal should remain open if username is empty");
 	}
 
+	@Test
 	public void t_03_validateSignupEmptyPassword()
 	{
-		WebDriver driver = new ChromeDriver();
-		driver.get("https://www.demoblaze.com/index.html");
-		driver.findElement(By.id("signup2")).click();
-		driver.findElement(By.id("sign-username")).sendKeys("cameronsteensma");
-
-		driver.findElement(By.id("sign-password")).sendKeys("");
-		driver.findElement(By.className("btn btn-primary")).click();
-		Assert.assertEquals("display: block;", driver.findElement(By.id("signInModal")).getAttribute("style"));
+		openSignupModal();
+		fillSignupForm("cameronsteensma", "");
+		Assert.assertTrue(isSignupModalDisplayed(), "Signup modal should remain open if password is empty");
 	}
 
+	@Test
 	public void t_04_validateSignupValidEntries()
 	{
-		WebDriver driver = new ChromeDriver();
-		driver.get("https://www.demoblaze.com/index.html");
-		driver.findElement(By.id("signup2")).click();
-		driver.findElement(By.id("sign-username")).sendKeys("cameronsteensma");
-
-		driver.findElement(By.id("sign-password")).sendKeys("abc*");
-		driver.findElement(By.className("btn btn-primary")).click();
-		Assert.assertEquals("display: none;", driver.findElement(By.id("signInModal")).getAttribute("style"));
+		openSignupModal();
+		fillSignupForm("newuser123", "validPass1!");
+		Assert.assertFalse(isSignupModalDisplayed(), "Signup modal should close on successful signup");
 	}
 
+	@Test
 	public void t_05_validateLogin_validEntries()
 	{
-		WebDriver driver = new ChromeDriver();
-		// Retrieve URL
-		driver.get("https://www.demoblaze.com/index.html");
-		// Click login
-		driver.findElement(By.id("login2")).click();
-		// Set username
-		WebElement txt_username = driver.findElement(By.id("loginusername"));
-		txt_username.sendKeys("username");
-		// Set password
-		driver.findElement(By.id("loginpassword")).sendKeys("password");
-		driver.findElement(By.className("btn btn-primary")).click();
-
-		WebElement result = driver.findElement(By.id("logout2"));
-		if (result != null)
-		{
-			System.out.println("Success!");
-
-		} else
-		{
-			System.out.println("Failed to login");
-		}
+		openLoginModal();
+		fillLoginForm("cameronsteensma", "abc*");
+		Assert.assertTrue(isLogoutVisible(), "Logout button should be visible after successful login");
 	}
 
-	public void t_06_validateSignup_validUserNameInValidPassword()
-	{
-		WebDriver driver = new ChromeDriver();
-		// Retrieve URL
-		driver.get("https://www.demoblaze.com/index.html");
-		// Click login
-		driver.findElement(By.id("login2")).click();
-		// Set username
-		WebElement txt_username = driver.findElement(By.id("loginusername"));
-		txt_username.sendKeys("username");
-		// Set password
-		driver.findElement(By.id("loginpassword")).sendKeys("");
-		driver.findElement(By.className("btn btn-primary")).click();
-
-		WebElement result = driver.findElement(By.id("logout2"));
-		if (result == null)
-		{
-			System.out.println("Success!");
-
-		} else
-		{
-			System.out.println("Failed to login");
-		}
-	}
-
+	@Test
 	public void t_07_validateSignup_InvalidUsername()
 	{
-		WebDriver driver = new ChromeDriver();
-		// Retrieve URL
-		driver.get("https://www.demoblaze.com/index.html");
-		// Click login
-		driver.findElement(By.id("login2")).click();
-		// Set username
-		WebElement txt_username = driver.findElement(By.id("loginusername"));
-		txt_username.sendKeys("");
-		// Set password
-		driver.findElement(By.id("loginpassword")).sendKeys("abc*");
-		driver.findElement(By.className("btn btn-primary")).click();
-
-		WebElement result = driver.findElement(By.id("logout2"));
-		if (result == null)
-		{
-			System.out.println("Success!");
-
-		} else
-		{
-			System.out.println("Failed to login");
-		}
+		openLoginModal();
+		fillLoginForm("invalidUser", "somePass!");
+		Assert.assertFalse(isLogoutVisible(), "Logout button should not be visible with empty username");
 	}
 
+	@Test
 	public void t_08_invalidEntries()
 	{
-		WebDriver driver = new ChromeDriver();
-		// Retrieve URL
-		driver.get("https://www.demoblaze.com/index.html");
-		// Click login
-		driver.findElement(By.id("login2")).click();
-		// Set username
-		WebElement txt_username = driver.findElement(By.id("loginusername"));
-		txt_username.sendKeys("");
-		// Set password
-		driver.findElement(By.id("loginpassword")).sendKeys("");
-		driver.findElement(By.className("btn btn-primary")).click();
-
-		WebElement result = driver.findElement(By.id("logout2"));
-		if (result == null)
-		{
-			System.out.println("Success!");
-
-		} else
-		{
-			System.out.println("Failed to login");
-		}
+		openLoginModal();
+		fillLoginForm("invalidUser", "wrongPass!");
+		Assert.assertFalse(isLogoutVisible(), "Logout button should not be visible with invalid credentials");
 	}
 
 }
